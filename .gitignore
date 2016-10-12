@@ -27,3 +27,14 @@
 *.exe
 *.out
 *.app
+
+# CMake
+build/*
+
+# Vim trash
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
