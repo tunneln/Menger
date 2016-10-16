@@ -5,12 +5,7 @@ namespace {
 	const int kMaxLevel = 4;
 };
 
-Menger::Menger(glm::vec3 min, glm::vec3 max)
-{
-	this->min = min;
-	this->max = max;
-	this->dirty_ = true;
-}
+Menger::Menger(glm::vec3 min, glm::vec3 max) : min(min), max(max), dirty_(true) {}
 
 Menger::~Menger() {}
 
@@ -34,41 +29,55 @@ Menger::set_clean()
 }
 
 void
-Menger::generate_geometry(std::vector<glm::vec4>& obj_vertices,
-							std::vector<glm::vec4>& vtx_normals,
-							std::vector<glm::uvec3>& obj_faces) const {
+Menger::generate_geometry(std::vector<glm::vec4>& obj_vertices, std::vector<glm::vec4>& vtx_normals,
+						std::vector<glm::uvec3>& obj_faces) const {
 
 	if(!this->nesting_level_) {
-		generate_menger(obj_vertices, vtx_normals, obj_faces, min, max);
-		return ;
-	}
+        generate_menger(obj_vertices, vtx_normals, obj_faces, min, max);
+        return;
+    }
 
-	std::vector<glm::vec3> computed = {this->min};
-	std::vector<glm::vec3> sub_mins;
+    std::vector<glm::vec3> mins;
+    mins.push_back(this->min);
 
-	for(int i = 1; i <= nesting_level_; i++) {
-		glm::vec3 w = float(1.0f / pow(3.0f, i)) * (max - min);
-		glm::vec3 x = glm::vec3(w.x, 0, 0);
-		glm::vec3 y = glm::vec3(0, w.y, 0);
-		glm::vec3 z = glm::vec3(0, 0, w.z);
+    for(int i = 1; i <= nesting_level_; i++) {
+        glm::vec3 w = (max - min) * float(1.0f / pow(3.0f, i));
+        glm::vec3 x = glm::vec3(w.x, 0, 0);
+        glm::vec3 y = glm::vec3(0, w.y, 0);
+        glm::vec3 z = glm::vec3(0, 0, w.z);
 
-		sub_mins = computed;
+        std::vector<glm::vec3> subcube;
+        subcube = mins;
+        mins.clear();
 
-		for(glm::vec3& minvec : sub_mins) {
-			computed = {minvec, (minvec + x), (minvec + 2.0f * x),
-			( minvec + z), ( minvec + z + 2.0f * x), ( minvec + 2.0f * z),
-			( minvec + 2.0f * z + x), ( minvec + 2.0f * z + 2.0f * x),
-			( minvec + y), ( minvec + y + 2.0f * z), ( minvec + y + 2.0f * z + 2.0f * x),
-			( minvec + y + 2.0f * x), ( minvec + 2.0f * y), ( minvec + 2.0f * y + x),
-			( minvec + 2.0f * y + 2.0f * x), ( minvec + 2.0f * y + z), ( minvec + 2.0f * y + z + 2.0f * x),
-			( minvec + 2.0f * y + 2.0f * z), ( minvec + 2.0f * y + 2.0f * z + x),
-			( minvec + 2.0f * y + 2.0f * z + 2.0f * x)};
-		}
-	}
+        for(glm::vec3 vec : subcube) {
+            mins.push_back(vec);
+            mins.push_back(vec + x);
+            mins.push_back(vec + 2.0f * x);
+            mins.push_back(vec + z);
+            mins.push_back(vec + z + 2.0f * x);
+            mins.push_back(vec + 2.0f * z);
+            mins.push_back(vec + 2.0f * z + x);
+            mins.push_back(vec + 2.0f * z + 2.0f * x);
+            mins.push_back(vec + y);
+            mins.push_back(vec + y + 2.0f * z);
+            mins.push_back(vec + y + 2.0f * z + 2.0f * x);
+            mins.push_back(vec + y + 2.0f * x);
+            mins.push_back(vec + 2.0f * y);
+            mins.push_back(vec + 2.0f * y + x);
+            mins.push_back(vec + 2.0f * y + 2.0f * x);
+            mins.push_back(vec + 2.0f * y + z);
+            mins.push_back(vec + 2.0f * y + z + 2.0f * x);
+            mins.push_back(vec + 2.0f * y + 2.0f * z);
+            mins.push_back(vec + 2.0f * y + 2.0f * z + x);
+            mins.push_back(vec + 2.0f * y + 2.0f * z + 2.0f * x);
+        }
+    }
 
-	glm::vec3 d = float(1.0 / pow(3.0f, nesting_level_)) * (max - min) ;
-	for(auto it = computed.begin(); it != computed.end(); ++it)
-		generate_menger(obj_vertices, vtx_normals, obj_faces, *it, *it + d);
+    glm::vec3 d = (max - min) * float(1.0 / pow(3.0f, nesting_level_));
+    for(auto it = mins.begin(); it != mins.end(); ++it)
+        generate_menger(obj_vertices, vtx_normals, obj_faces, *it, *it + d);
+
 }
 
 void

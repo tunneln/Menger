@@ -57,7 +57,7 @@ in vec4 light_direction;
 out vec4 fragment_color;
 void main()
 {
-	vec4 color = vec4(world_normal.x, world_normal.y, world_normal.z, 1.0);
+	vec4 color = vec4(world_normal.x*1.0, world_normal.y*1.0, world_normal.z*1.0, 1.0);
 	float dot_nl = dot(normalize(light_direction), normalize(normal));
 	dot_nl = clamp(dot_nl, 0.0, 1.0);
 	fragment_color = clamp(dot_nl * color, 0.0, 1.0);
@@ -74,14 +74,14 @@ void main()
 {
 	vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
 	vec4 modded_coord = mod(world_position, vec4(0.5));
-	if(modded_coord.x > 0.25) {
+	if (modded_coord.x > 0.25) {
 		if(modded_coord.z > 0.25) {
 			color = vec4(1.0, 1.0, 1.0, 1.0);
 		} else {
 			color = vec4(0.0, 0.0, 0.0, 1.0);
 		}
 	} else {
-		if(modded_coord.z > 0.25) {
+		if (modded_coord.z > 0.25) {
 			color = vec4(0.0, 0.0, 0.0, 1.0);
 		} else {
 			color = vec4(1.0, 1.0, 1.0, 1.0);
@@ -126,7 +126,8 @@ KeyCallback(GLFWwindow* window,
 		g_camera.trans(glm::vec2(0, 1));
 	}
 
-	if (!g_menger) return ;
+	if (!g_menger)
+		return ;
 
 	if (key == GLFW_KEY_0 && action != GLFW_RELEASE) {
 		g_menger->set_nesting_level(0);
@@ -142,29 +143,34 @@ KeyCallback(GLFWwindow* window,
 
 	bool press = (action == GLFW_PRESS);
 	if (action == GLFW_RELEASE || action == GLFW_PRESS) {
-		if (key == GLFW_KEY_LEFT_ALT || key == GLFW_KEY_RIGHT_ALT) alt = press;
-		else if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT) shift = press;
-		else if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL) ctrl = press;
+		if (key == GLFW_KEY_LEFT_ALT || key == GLFW_KEY_RIGHT_ALT)
+			alt = press;
+		else if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)
+			shift = press;
+		else if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL)
+			ctrl = press;
 	}
 }
 
 int g_current_button;
 bool g_mouse_pressed;
 bool g_prev_pressed;
-glm::vec2 prev(0, 0);
+glm::vec2 prev(0.0f, 0.0f);
+
+void generate_floor(std::vector<glm::vec4> &vertices, std::vector<glm::vec4> &normals, std::vector<glm::uvec3> &faces);
 
 void
 MousePosCallback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
-	glm::vec2 foo(mouse_x, mouse_y);
-	glm::vec2 diff = foo - prev;
+	glm::vec2 mouse(mouse_x, mouse_y);
+	glm::vec2 diff = mouse - prev;
 
 	if (g_mouse_pressed && g_prev_pressed) {
 		if (g_current_button == GLFW_MOUSE_BUTTON_LEFT && !alt && !shift && !ctrl) {
-			g_camera.pitch((180.0 / M_PI) * -diff.y / window_width);
-			g_camera.yaw((180.0 /  M_PI) * -diff.x / window_height);
-		} else if (g_current_button == GLFW_MOUSE_BUTTON_RIGHT || (g_current_button == GLFW_MOUSE_BUTTON_LEFT && (alt|| shift))) {
-			g_camera.zoom(10.0 * diff.y / window_height);
+			g_camera.pitch((180.0f / M_PI) * -diff.y / window_width);
+			g_camera.yaw((180.0f /  M_PI) * -diff.x / window_height);
+		} else if (g_current_button == GLFW_MOUSE_BUTTON_RIGHT || (g_current_button == GLFW_MOUSE_BUTTON_LEFT && (alt || shift))) {
+			g_camera.zoom(10.0f * diff.y / window_height);
 		} else if (g_current_button == GLFW_MOUSE_BUTTON_MIDDLE || (g_current_button == GLFW_MOUSE_BUTTON_LEFT && ctrl)) {
 			g_camera.trans(25.0f * glm::vec2(-diff.x / window_width, diff.y / window_height));
 		}

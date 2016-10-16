@@ -14,11 +14,11 @@ public:
 	void generate_geometry(std::vector<glm::vec4>& obj_vertices,
 					std::vector<glm::vec4>& vtx_normals,
 						std::vector<glm::uvec3>& obj_faces) const;
+private:
 	void generate_menger(std::vector<glm::vec4>& obj_vertices,
 						std::vector<glm::vec4>& vtx_normals,
 						std::vector<glm::uvec3>& obj_faces,
 						glm::vec3 min, glm::vec3 max) const;
-private:
 	int nesting_level_ = 0;
 	bool dirty_ = false;
 	glm::vec3 min;

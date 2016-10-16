@@ -1,4 +1,6 @@
 #include "camera.h"
+#include <iostream>
+#include <sstream>
 #include <glm/gtx/rotate_vector.hpp>
 
 namespace {
@@ -9,7 +11,7 @@ namespace {
 };
 
 void Camera::yaw(float dir) {
-	rotate = glm::rotate(rotation_speed*dir, up_) * rotate;
+	rotate *= glm::rotate(rotation_speed * dir, up_);
 	glm::vec3 eye(rotate * glm::vec4(eye_, 1));
 	look_ = glm::normalize(middle_ - eye);
 	right_ = glm::normalize(glm::cross(look_, up_));
@@ -25,22 +27,21 @@ void Camera::pitch(float dir) {
 }
 
 void Camera::roll(float dir) {
-	glm::mat4 rollRotate = glm::rotate(dir * roll_speed, look_);
-	right_ = glm::normalize(glm::vec3(rollRotate * glm::vec4(right_, 0.0f)));
-	up_ = glm::normalize(glm::vec3(rollRotate * glm::vec4(up_, 0.0f)));
+	glm::mat4 roll_rotate = glm::rotate(dir * roll_speed, look_);
+	right_ = glm::normalize(glm::vec3(roll_rotate * glm::vec4(right_, 0.0f)));
+	up_ = glm::normalize(glm::vec3(roll_rotate * glm::vec4(up_, 0.0f)));
 }
 
 void Camera::trans(glm::vec2 dir) {
-	translate  = glm::translate((dir.y * up_ + dir.x * right_) * pan_speed) * translate;
+	translate *= glm::translate((dir.y * up_ + dir.x * right_) * pan_speed);
 }
 
 void Camera::zoom(float dir) {
-	camera_distance_ += dir*zoom_speed;
+	camera_distance_ += zoom_speed * dir;
 	eye_ = glm::vec3(0.0f, 0.0f, camera_distance_);
 }
 
-glm::mat4 Camera::get_view_matrix() const
-{
+glm::mat4 Camera::get_view_matrix() const {
 	glm::vec3 newEye(translate * rotate * glm::vec4(eye_, 1));
 	glm::vec3 newmiddle(translate * rotate * glm::vec4(middle_, 1));
 
