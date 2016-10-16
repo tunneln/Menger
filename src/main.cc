@@ -117,13 +117,13 @@ KeyCallback(GLFWwindow* window,
 	} else if (key == GLFW_KEY_D && action != GLFW_RELEASE) {
 		g_camera.roll(1);
 	} else if (key == GLFW_KEY_LEFT && action != GLFW_RELEASE) {
-		g_camera.translate(glm::vec2(-1, 0));
+		g_camera.trans(glm::vec2(-1, 0));
 	} else if (key == GLFW_KEY_RIGHT && action != GLFW_RELEASE) {
-		g_camera.translate(glm::vec2(1, 0));
+		g_camera.trans(glm::vec2(1, 0));
 	} else if (key == GLFW_KEY_DOWN && action != GLFW_RELEASE) {
-		g_camera.translate(glm::vec2(0, -1));
+		g_camera.trans(glm::vec2(0, -1));
 	} else if (key == GLFW_KEY_UP && action != GLFW_RELEASE) {
-		g_camera.translate(glm::vec2(0, 1));
+		g_camera.trans(glm::vec2(0, 1));
 	}
 
 	if (!g_menger) return ;
@@ -166,7 +166,7 @@ MousePosCallback(GLFWwindow* window, double mouse_x, double mouse_y)
 		} else if (g_current_button == GLFW_MOUSE_BUTTON_RIGHT || (g_current_button == GLFW_MOUSE_BUTTON_LEFT && (alt|| shift))) {
 			g_camera.zoom(10.0 * diff.y / window_height);
 		} else if (g_current_button == GLFW_MOUSE_BUTTON_MIDDLE || (g_current_button == GLFW_MOUSE_BUTTON_LEFT && ctrl)) {
-			g_camera.translate(25.0f * glm::vec2(-diff.x / window_width, diff.y / window_height));
+			g_camera.trans(25.0f * glm::vec2(-diff.x / window_width, diff.y / window_height));
 		}
 	}
 
@@ -181,7 +181,7 @@ MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 	g_current_button = button;
 }
 
-void generate_floor(std::vector<glm::vec4> &vertices, std::vector<glm::vec4> &normals, std::vector<glm::uvec3> &faces) {
+void generate_floor(std::vector<glm::vec4> &vertices, std::vector<glm::vec4>& normals, std::vector<glm::uvec3> &faces) {
 	unsigned long v = vertices.size();
 
 	normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
@@ -231,18 +231,13 @@ int main(int argc, char* argv[])
 	std::vector<glm::uvec3> obj_faces;
 
 	//FIXME: Create the geometry from a Menger object (in menger.cc).
-
-	normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	g_menger->set_nesting_level(1);
+	g_menger->set_nesting_level(4);
 	g_menger->generate_geometry(obj_vertices, vtx_normals, obj_faces);
 	g_menger->set_clean();
 
 	glm::vec4 min_bounds = glm::vec4(std::numeric_limits<float>::max());
 	glm::vec4 max_bounds = glm::vec4(-std::numeric_limits<float>::max());
-	for (int i = 0; i < obj_vertices.size(); ++i) {
+	for (size_t i = 0; i < obj_vertices.size(); ++i) {
 		min_bounds = glm::min(obj_vertices[i], min_bounds);
 		max_bounds = glm::max(obj_vertices[i], max_bounds);
 	}
@@ -372,18 +367,17 @@ int main(int argc, char* argv[])
 
 	// FIXME: Setup another program for the floor, and get its locations.
 	// Note: you can reuse the vertex and geometry shader objects
-	GLuint floor_program_id = 1;
+	GLuint floor_program_id = glCreateProgram();
 	GLint floor_projection_matrix_location = 1;
 	GLint floor_view_matrix_location = 1;
 	GLint floor_light_position_location = 1;
-
-	CHECK_GL_ERROR(floor_program_id = glCreateProgram();
+	CHECK_GL_ERROR(floor_program_id);
 	CHECK_GL_ERROR(glAttachShader(floor_program_id, vertex_shader_id));
 	CHECK_GL_ERROR(glAttachShader(floor_program_id, floor_fragment_shader_id));
 	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kFloorVao][kVertexBuffer]));
-	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floor_vertices.size() * 4, nullptr, GL_STATIC_DRAW));
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * f_v.size() * 4, nullptr, GL_STATIC_DRAW));
 	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kFloorVao][kNormalBuffer]));
-	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floor_normals.size() * 4, nullptr, GL_STATIC_DRAW));
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * f_n.size() * 4, nullptr, GL_STATIC_DRAW));
 	CHECK_GL_ERROR(glBindAttribLocation(floor_program_id, 0, "vertex_position"));
 	CHECK_GL_ERROR(glBindAttribLocation(floor_program_id, 1, "vertex_normal"));
 	CHECK_GL_ERROR(glBindFragDataLocation(floor_program_id, 0, "fragment_color"));
@@ -409,7 +403,7 @@ int main(int argc, char* argv[])
 
 		if (g_menger && g_menger->is_dirty()) {
 			obj_faces.clear();
-			obv_vertices.clear();
+			obj_vertices.clear();
 			vtx_normals.clear();
 			g_menger->generate_geometry(obj_vertices, vtx_normals, obj_faces);
 			g_menger->set_clean();
@@ -446,14 +440,14 @@ int main(int argc, char* argv[])
 		CHECK_GL_ERROR(glBindVertexArray(g_array_objects[kFloorVao]));
 
 		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kFloorVao][kVertexBuffer]));
-		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floor_vertices.size() * 4, &floor_vertices[0], GL_STATIC_DRAW));
+		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * f_v.size() * 4, &f_v[0], GL_STATIC_DRAW));
 		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kFloorVao][kNormalBuffer]));
-		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floor_normals.size() * 4, &floor_normals[0], GL_STATIC_DRAW));
+		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * f_n.size() * 4, &f_n[0], GL_STATIC_DRAW));
 		CHECK_GL_ERROR(glUseProgram(floor_program_id));
 		CHECK_GL_ERROR(glUniformMatrix4fv(floor_projection_matrix_location, 1, GL_FALSE, &projection_matrix[0][0]));
 		CHECK_GL_ERROR(glUniformMatrix4fv(floor_view_matrix_location, 1, GL_FALSE, &view_matrix[0][0]));
 		CHECK_GL_ERROR(glUniform4fv(floor_light_position_location, 1, &light_position[0]));
-		CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, floor_faces.size() * 3, GL_UNSIGNED_INT, 0));
+		CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, f_f.size() * 3, GL_UNSIGNED_INT, 0));
 
 		// Poll and swap.
 		glfwPollEvents();

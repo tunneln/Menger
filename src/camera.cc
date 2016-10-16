@@ -1,4 +1,5 @@
 #include "camera.h"
+#include <glm/gtx/rotate_vector.hpp>
 
 namespace {
 	float pan_speed = 0.1f;
